@@ -68,7 +68,15 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
         throw new Error(functionError.message);
       }
 
-      if (!data || !data.movies) {
+      if (!data) {
+        throw new Error('No movie data received');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data.movies) {
         throw new Error('No movie data received');
       }
 

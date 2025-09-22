@@ -28,10 +28,42 @@ serve(async (req) => {
   }
 
   try {
-    const { date } = await req.json()
-    
+    let date: string | null = null
+
+    // Try to read the JSON body first – if the request has no body (e.g. a GET
+    // request that only includes query parameters) `req.json()` will throw. We
+    // swallow that error so the function can still respond with a friendly
+    // message instead of bubbling up a 500 status code to the caller.
+    try {
+      const body = await req.json()
+      date = body?.date ?? null
+    } catch (parseError) {
+      console.warn('Request body could not be parsed as JSON:', parseError)
+    }
+
     if (!date) {
-      throw new Error('Date parameter is required')
+      const urlObj = new URL(req.url)
+      date = urlObj.searchParams.get('date')
+    }
+
+    if (!date) {
+      return new Response(
+        JSON.stringify({
+          movies: [],
+          error: 'Date parameter is required',
+          debug: {
+            timestamp: new Date().toISOString(),
+            url: req.url
+          }
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      )
     }
     
     // Construct the URL for Cineteca Nacional
@@ -169,9 +201,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error fetching movies:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
+        movies: [],
         error: errorMessage,
         debug: {
           timestamp: new Date().toISOString(),
@@ -179,8 +212,8 @@ serve(async (req) => {
         }
       }),
       {
-        status: 500,
-        headers: { 
+        status: 200,
+        headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
         },
