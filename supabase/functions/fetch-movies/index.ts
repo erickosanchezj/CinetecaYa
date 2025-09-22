@@ -56,6 +56,8 @@ serve(async (req) => {
     }
     
     const html = await response.text()
+    console.log(`Received HTML, length: ${html.length}`)
+    
     const doc = new DOMParser().parseFromString(html, 'text/html')
     
     if (!doc) {
@@ -64,60 +66,68 @@ serve(async (req) => {
     
     const movies: Movie[] = []
     
-    // Find all movie containers
+    // Find all movie containers - updated selector based on actual HTML
     const movieContainers = doc.querySelectorAll('.col-12.col-md-6.col-lg-4.float-left')
+    console.log(`Found ${movieContainers.length} movie containers`)
     
     for (const container of movieContainers) {
       try {
-        // Extract movie title
-        const titleElement = container.querySelector('.font-weight-bold.text-uppercase')
+        // Extract movie title from the <p> tag with specific classes
+        const titleElement = container.querySelector('p.font-weight-bold.text-uppercase.text-decoration-none.text-black')
         const title = titleElement?.textContent?.trim() || ''
         
-        // Extract image
-        const imgElement = container.querySelector('img')
+        if (!title) {
+          console.log('Skipping container: no title found')
+          continue
+        }
+        
+        // Extract image from the first <img> tag
+        const imgElement = container.querySelector('img.img-fluid')
         const image = imgElement?.getAttribute('src') || ''
         
-        // Extract director, year, duration info
-        const infoElement = container.querySelector('.small')
+        // Extract director, year, duration info from the .small div
+        const infoElement = container.querySelector('div.small')
         const info = infoElement?.textContent?.trim() || ''
         
         // Parse director, year, duration from info text
         let director = '', year = '', duration = ''
-        const dirMatch = info.match(/Dir\.: ([^,]+)/)
+        const dirMatch = info.match(/Dir\.:\s*([^,]+)/)
         const yearMatch = info.match(/(\d{4})/)
-        const durMatch = info.match(/Dur\.: (\d+) mins/)
+        const durMatch = info.match(/Dur\.:\s*(\d+)\s*mins/)
         
         if (dirMatch) director = dirMatch[1].trim()
         if (yearMatch) year = yearMatch[1]
         if (durMatch) duration = durMatch[1] + ' mins'
         
-        // Extract showtimes and ticket links
+        // Extract showtimes and ticket links from <a> tags with specific href pattern
         const showtimes: string[] = []
         const ticketLinks: string[] = []
         let room = ''
         
+        // Find all ticket links within this container
         const timeLinks = container.querySelectorAll('a[href*="Ticketing"]')
+        console.log(`Found ${timeLinks.length} ticket links for "${title}"`)
+        
         for (const link of timeLinks) {
           const time = link.textContent?.trim()
           const ticketUrl = link.getAttribute('href')
           
-          if (time && ticketUrl) {
+          if (time && ticketUrl && time.match(/^\d{2}:\d{2}$/)) {
             showtimes.push(time)
             ticketLinks.push(ticketUrl)
           }
         }
         
-        // Extract room information
-        const roomElement = container.querySelector('.pb-1.small')
-        if (roomElement) {
-          const roomText = roomElement.textContent || ''
-          const roomMatch = roomText.match(/SALA (\d+[A-Za-z]*) Xoco/)
-          if (roomMatch) {
-            room = `Sala ${roomMatch[1]}`
-          }
+        // Extract room information from the text content
+        const textContent = container.textContent || ''
+        const roomMatch = textContent.match(/SALA\s+(\d+[A-Za-z]*)\s+Xoco/)
+        if (roomMatch) {
+          room = `Sala ${roomMatch[1]}`
         }
         
-        if (title && showtimes.length > 0) {
+        console.log(`Parsed movie: "${title}", ${showtimes.length} showtimes, room: ${room}`)
+        
+        if (title) {
           movies.push({
             title,
             showtimes,
@@ -135,7 +145,7 @@ serve(async (req) => {
       }
     }
     
-    console.log(`Found ${movies.length} movies`)
+    console.log(`Successfully parsed ${movies.length} movies`)
     
     return new Response(
       JSON.stringify({ 
@@ -144,6 +154,7 @@ serve(async (req) => {
           url,
           date,
           totalFound: movies.length,
+          containersFound: movieContainers.length,
           timestamp: new Date().toISOString()
         }
       }),
