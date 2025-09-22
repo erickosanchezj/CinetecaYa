@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,24 +19,45 @@ interface MovieWithUpcoming extends Movie {
   upcomingShowtimes: Array<{ time: string; ticketLink: string }>;
 }
 
-export const useMovies = () => {
+interface UseMoviesOptions {
+  manualDate?: Date;
+  manualTime?: string;
+}
+
+export const useMovies = (options: UseMoviesOptions = {}) => {
   const [movies, setMovies] = useState<MovieWithUpcoming[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  const fetchMovies = async () => {
+  const fetchMovies = useCallback(async (customDate?: Date, customTime?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get current date in Mexico City timezone
-      const mexicoCityTime = toZonedTime(new Date(), "America/Mexico_City");
-      const dateStr = format(mexicoCityTime, "yyyy-MM-dd");
-      const currentHour = mexicoCityTime.getHours();
-      const currentMinute = mexicoCityTime.getMinutes();
+      // Use custom date/time if provided, otherwise use current Mexico City time
+      const useCustom = customDate || options.manualDate;
+      const targetDate = useCustom || toZonedTime(new Date(), "America/Mexico_City");
+      const dateStr = format(targetDate, "yyyy-MM-dd");
+      
+      let currentHour: number;
+      let currentMinute: number;
+      
+      if (customTime || options.manualTime) {
+        const timeStr = customTime || options.manualTime || "00:00";
+        const [hourStr, minuteStr] = timeStr.split(':');
+        currentHour = parseInt(hourStr);
+        currentMinute = parseInt(minuteStr);
+      } else {
+        const mexicoCityTime = toZonedTime(new Date(), "America/Mexico_City");
+        currentHour = mexicoCityTime.getHours();
+        currentMinute = mexicoCityTime.getMinutes();
+      }
 
-      console.log(`Fetching movies for ${dateStr}, current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+      console.log(`Fetching movies for ${dateStr}, time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} ${useCustom ? '(manual)' : '(auto)'}`);
+
+      setLastFetchTime(new Date());
 
       // Call our edge function
       const { data, error: functionError } = await supabase.functions.invoke('fetch-movies', {
@@ -91,10 +112,17 @@ export const useMovies = () => {
       setMovies(sortedMovies);
 
       const upcomingCount = sortedMovies.filter(m => m.upcomingShowtimes.length > 0).length;
+      const timeType = (customDate || customTime || options.manualDate || options.manualTime) ? 'manual' : 'live';
+      
       if (upcomingCount > 0) {
         toast({
-          title: "Movies Found!",
+          title: `Movies Found! (${timeType})`,
           description: `${upcomingCount} movie${upcomingCount > 1 ? 's' : ''} starting within the hour`,
+        });
+      } else {
+        toast({
+          title: `No Upcoming Movies (${timeType})`,
+          description: `Found ${sortedMovies.length} total movies, but none starting soon`,
         });
       }
 
@@ -109,21 +137,24 @@ export const useMovies = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [options.manualDate, options.manualTime, toast]);
 
   useEffect(() => {
-    fetchMovies();
-    
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchMovies, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    // Only auto-fetch if not using manual date/time
+    if (!options.manualDate && !options.manualTime) {
+      fetchMovies();
+      
+      // Refresh every 5 minutes for live mode only
+      const interval = setInterval(() => fetchMovies(), 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchMovies, options.manualDate, options.manualTime]);
 
   return {
     movies,
     loading,
     error,
+    lastFetchTime,
     refetch: fetchMovies
   };
 };

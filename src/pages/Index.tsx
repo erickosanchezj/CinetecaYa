@@ -1,12 +1,45 @@
+import { useState } from "react";
 import { RefreshCw, Film, Search } from "lucide-react";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { CurrentTime } from "@/components/CurrentTime";
 import { MovieCard } from "@/components/MovieCard";
+import { DateTimePicker } from "@/components/DateTimePicker";
 import { useMovies } from "@/hooks/useMovies";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
-  const { movies, loading, error, refetch } = useMovies();
+  const [manualDate, setManualDate] = useState<Date | undefined>();
+  const [manualTime, setManualTime] = useState<string | undefined>();
+  const [isManualMode, setIsManualMode] = useState(false);
+
+  const { movies, loading, error, lastFetchTime, refetch } = useMovies({
+    manualDate,
+    manualTime
+  });
+
+  const handleDateTimeChange = (date: Date, time: string) => {
+    setManualDate(date);
+    setManualTime(time);
+    setIsManualMode(true);
+    refetch(date, time);
+  };
+
+  const handleReset = () => {
+    setManualDate(undefined);
+    setManualTime(undefined);
+    setIsManualMode(false);
+    refetch();
+  };
+
+  const getCurrentDateTime = () => {
+    const mexicoCityTime = toZonedTime(new Date(), "America/Mexico_City");
+    return {
+      date: mexicoCityTime,
+      time: format(mexicoCityTime, "HH:mm")
+    };
+  };
 
   const upcomingMovies = movies.filter(movie => movie.upcomingShowtimes.length > 0);
   const otherMovies = movies.filter(movie => movie.upcomingShowtimes.length === 0);
@@ -32,7 +65,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={refetch}
+                onClick={() => refetch()}
                 disabled={loading}
                 className="border-primary/30 hover:bg-primary/10"
               >
@@ -40,6 +73,17 @@ const Index = () => {
                 Refresh
               </Button>
             </div>
+          </div>
+
+          {/* Debug Controls */}
+          <div className="mt-4">
+            <DateTimePicker
+              onDateTimeChange={handleDateTimeChange}
+              onReset={handleReset}
+              currentDate={manualDate || getCurrentDateTime().date}
+              currentTime={manualTime || getCurrentDateTime().time}
+              isManual={isManualMode}
+            />
           </div>
         </div>
       </header>
@@ -72,9 +116,16 @@ const Index = () => {
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Unable to fetch movies</h2>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={refetch} variant="outline">
+            <Button onClick={() => refetch()} variant="outline">
               Try Again
             </Button>
+          </div>
+        )}
+
+        {!loading && !error && movies.length > 0 && lastFetchTime && (
+          <div className="text-center text-xs text-muted-foreground mb-6">
+            Last updated: {format(lastFetchTime, "HH:mm:ss")} • 
+            {isManualMode ? " Manual mode" : " Live mode"}
           </div>
         )}
 
