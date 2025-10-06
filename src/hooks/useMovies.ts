@@ -13,7 +13,6 @@ interface Movie {
   year: string;
   duration: string;
   ticketLinks: string[];
-  location: string;
 }
 
 interface MovieWithUpcoming extends Movie {

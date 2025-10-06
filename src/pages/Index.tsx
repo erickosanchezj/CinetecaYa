@@ -188,7 +188,7 @@ const Index = () => {
                     {upcomingMovies.length > 0 ? 'Todas las demás funciones de hoy' : 'Funciones de hoy'}
                   </h2>
                   <p className="text-muted-foreground">
-                    Cartelera completa en Cineteca Nacional y CENART
+                    Cartelera completa en Cineteca Nacional
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
