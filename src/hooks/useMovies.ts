@@ -55,7 +55,7 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
         currentMinute = mexicoCityTime.getMinutes();
       }
 
-      console.log(`Fetching movies for ${dateStr}, time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} ${useCustom ? '(manual)' : '(auto)'}`);
+      console.log(`Obteniendo funciones para ${dateStr}, hora: ${currentHour}:${currentMinute.toString().padStart(2, '0')} ${useCustom ? '(manual)' : '(automático)'}`);
 
       setLastFetchTime(new Date());
 
@@ -69,7 +69,7 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
       }
 
       if (!data) {
-        throw new Error('No movie data received');
+        throw new Error('No se recibió información de funciones');
       }
 
       if (data.error) {
@@ -77,7 +77,7 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
       }
 
       if (!data.movies) {
-        throw new Error('No movie data received');
+        throw new Error('No se recibió información de funciones');
       }
 
       // Process movies to find upcoming showtimes
@@ -120,22 +120,22 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
       setMovies(sortedMovies);
 
       const upcomingCount = sortedMovies.filter(m => m.upcomingShowtimes.length > 0).length;
-      const timeType = (customDate || customTime || options.manualDate || options.manualTime) ? 'manual' : 'live';
-      
+      const timeMode = (customDate || customTime || options.manualDate || options.manualTime) ? 'manual' : 'en vivo';
+
       if (upcomingCount > 0) {
         toast({
-          title: `Movies Found! (${timeType})`,
-          description: `${upcomingCount} movie${upcomingCount > 1 ? 's' : ''} starting within the hour`,
+          title: `¡Películas encontradas! (${timeMode})`,
+          description: `${upcomingCount} ${upcomingCount === 1 ? 'función' : 'funciones'} que comienzan en la próxima hora`,
         });
       } else {
         toast({
-          title: `No Upcoming Movies (${timeType})`,
-          description: `Found ${sortedMovies.length} total movies, but none starting soon`,
+          title: `Sin funciones próximas (${timeMode})`,
+          description: `Se encontraron ${sortedMovies.length} ${sortedMovies.length === 1 ? 'función' : 'funciones'} en total, pero ninguna comienza pronto`,
         });
       }
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movies';
+      const errorMessage = err instanceof Error ? err.message : 'Error al obtener las funciones';
       setError(errorMessage);
       toast({
         title: "Error",
