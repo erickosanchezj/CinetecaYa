@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw, Film, Search } from "lucide-react";
+import { RefreshCw, Film, Search, Beaker } from "lucide-react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { CurrentTime } from "@/components/CurrentTime";
@@ -13,6 +13,7 @@ const Index = () => {
   const [manualDate, setManualDate] = useState<Date | undefined>();
   const [manualTime, setManualTime] = useState<string | undefined>();
   const [isManualMode, setIsManualMode] = useState(false);
+  const [showTesting, setShowTesting] = useState(false);
 
   const { movies, loading, error, lastFetchTime, refetch } = useMovies({
     manualDate,
@@ -31,6 +32,19 @@ const Index = () => {
     setManualTime(undefined);
     setIsManualMode(false);
     refetch();
+  };
+
+  const handleToggleTesting = () => {
+    setShowTesting(prev => {
+      if (!prev) {
+        // Turning testing on
+        return true;
+      } else {
+        // Turning testing off, so reset
+        handleReset();
+        return false;
+      }
+    });
   };
 
   const getCurrentDateTime = () => {
@@ -60,8 +74,17 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <CurrentTime />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToggleTesting}
+                className="border-primary/30 hover:bg-primary/10"
+              >
+                <Beaker className="w-4 h-4 mr-2" />
+                {showTesting ? "Disable Testing" : "Enable Testing"}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -76,15 +99,17 @@ const Index = () => {
           </div>
 
           {/* Debug Controls */}
-          <div className="mt-4">
-            <DateTimePicker
-              onDateTimeChange={handleDateTimeChange}
-              onReset={handleReset}
-              currentDate={manualDate || getCurrentDateTime().date}
-              currentTime={manualTime || getCurrentDateTime().time}
-              isManual={isManualMode}
-            />
-          </div>
+          {showTesting && (
+            <div className="mt-4">
+              <DateTimePicker
+                onDateTimeChange={handleDateTimeChange}
+                onReset={handleReset}
+                currentDate={manualDate || getCurrentDateTime().date}
+                currentTime={manualTime || getCurrentDateTime().time}
+                isManual={isManualMode}
+              />
+            </div>
+          )}
         </div>
       </header>
 
