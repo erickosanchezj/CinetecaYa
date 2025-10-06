@@ -60,6 +60,10 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+### Serverless functions
+
+The movie listings are scraped through a GitHub Pages Function located at `.github/functions/fetch-movies.ts`. The frontend calls this function through the `/api/fetch-movies` endpoint by default. When developing locally you can point `VITE_MOVIE_FUNCTION_URL` to a deployed instance of the function if you need to test against a live endpoint.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/9b51b46c-d14e-4fa6-a9ec-4d26fc71ec53) and click on Share -> Publish.
