@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { es as esLocale } from "date-fns/locale";
 import { CalendarIcon, Clock, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -54,17 +55,17 @@ export const DateTimePicker = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Clock className="w-4 h-4" />
-          Test Scraping
+          Pruebas de scraping
         </CardTitle>
         <CardDescription className="text-xs">
-          Override date and time to test different scenarios
+          Ajusta fecha y hora para probar distintos escenarios
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           {/* Date Picker */}
           <div className="space-y-1">
-            <Label htmlFor="date" className="text-xs">Date</Label>
+            <Label htmlFor="date" className="text-xs">Fecha</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -75,7 +76,7 @@ export const DateTimePicker = ({
                   )}
                 >
                   <CalendarIcon className="w-3 h-3 mr-1" />
-                  {selectedDate ? format(selectedDate, "MMM dd") : "Pick date"}
+                  {selectedDate ? format(selectedDate, "d 'de' MMM", { locale: esLocale }) : "Selecciona fecha"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -85,6 +86,7 @@ export const DateTimePicker = ({
                   onSelect={handleDateSelect}
                   initialFocus
                   className="p-3 pointer-events-auto"
+                  locale={esLocale}
                 />
               </PopoverContent>
             </Popover>
@@ -92,7 +94,7 @@ export const DateTimePicker = ({
 
           {/* Time Input */}
           <div className="space-y-1">
-            <Label htmlFor="time" className="text-xs">Time</Label>
+            <Label htmlFor="time" className="text-xs">Hora</Label>
             <Input
               id="time"
               type="time"
@@ -109,9 +111,9 @@ export const DateTimePicker = ({
             size="sm"
             className="flex-1 h-7 text-xs"
           >
-            Test Scraping
+            Probar scraping
           </Button>
-          
+
           {isManual && (
             <Button
               onClick={onReset}
@@ -126,7 +128,7 @@ export const DateTimePicker = ({
 
         {isManual && (
           <div className="text-xs text-accent font-medium text-center py-1 px-2 bg-accent/10 rounded">
-            Using manual time: {format(selectedDate, "MMM dd")} at {selectedTime}
+            Usando horario manual: {format(selectedDate, "d 'de' MMM", { locale: esLocale })} a las {selectedTime}
           </div>
         )}
       </CardContent>

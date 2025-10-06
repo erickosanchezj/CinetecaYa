@@ -35,18 +35,18 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           {upcomingShowtimes.length > 0 && (
             <div className="absolute top-3 right-3 bg-accent text-accent-foreground px-2 py-1 rounded-full text-xs font-medium cinema-glow">
-              Starting Soon
+              Comienza pronto
             </div>
           )}
         </div>
-        
+
         <div className="p-4 space-y-3">
           <div>
             <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2">
               {movie.title}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {movie.director && `Dir: ${movie.director}`}
+              {movie.director && `Dir. ${movie.director}`}
               {movie.year && ` • ${movie.year}`}
               {movie.duration && ` • ${movie.duration}`}
             </p>
@@ -61,7 +61,7 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-primary">
                 <Clock className="w-4 h-4" />
-                <span>Starting within the hour:</span>
+                <span>Comienza en la próxima hora:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {upcomingShowtimes.map((showtime, index) => (
@@ -91,7 +91,7 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>All showtimes today:</span>
+                <span>Todas las funciones de hoy:</span>
               </div>
               <div className="flex flex-wrap gap-1">
                 {movie.showtimes.slice(0, 4).map((time, index) => (
@@ -104,7 +104,7 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
                 ))}
                 {movie.showtimes.length > 4 && (
                   <span className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs">
-                    +{movie.showtimes.length - 4} more
+                    +{movie.showtimes.length - 4} más
                   </span>
                 )}
               </div>

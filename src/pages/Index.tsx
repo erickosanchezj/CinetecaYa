@@ -70,10 +70,10 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Cineteca Ahora</h1>
-                <p className="text-sm text-muted-foreground">Movies starting soon</p>
+                <p className="text-sm text-muted-foreground">Funciones que comienzan pronto</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <CurrentTime />
               <Button
@@ -83,7 +83,7 @@ const Index = () => {
                 className="border-primary/30 hover:bg-primary/10"
               >
                 <Beaker className="w-4 h-4 mr-2" />
-                {showTesting ? "Disable Testing" : "Enable Testing"}
+                {showTesting ? "Desactivar pruebas" : "Activar pruebas"}
               </Button>
               <Button
                 variant="outline"
@@ -93,7 +93,7 @@ const Index = () => {
                 className="border-primary/30 hover:bg-primary/10"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
+                Actualizar
               </Button>
             </div>
           </div>
@@ -139,18 +139,17 @@ const Index = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
               <Search className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">Unable to fetch movies</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">No se pudieron obtener las funciones</h2>
             <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={() => refetch()} variant="outline">
-              Try Again
+              Intentar de nuevo
             </Button>
           </div>
         )}
 
         {!loading && !error && movies.length > 0 && lastFetchTime && (
           <div className="text-center text-xs text-muted-foreground mb-6">
-            Last updated: {format(lastFetchTime, "HH:mm:ss")} • 
-            {isManualMode ? " Manual mode" : " Live mode"}
+            Última actualización: {format(lastFetchTime, "HH:mm:ss")} • {isManualMode ? "Modo manual" : "Modo en vivo"}
           </div>
         )}
 
@@ -163,10 +162,10 @@ const Index = () => {
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-accent flex-shrink-0 cinema-glow"></div>
-                    Starting Within the Hour
+                    Comienzan en la próxima hora
                   </h2>
                   <p className="text-muted-foreground">
-                    {upcomingMovies.length} movie{upcomingMovies.length > 1 ? 's' : ''} you can catch right now
+                    {upcomingMovies.length} {upcomingMovies.length === 1 ? 'función' : 'funciones'} disponibles en la próxima hora
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -186,10 +185,10 @@ const Index = () => {
               <section>
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-foreground mb-2">
-                    {upcomingMovies.length > 0 ? 'All Other Movies Today' : 'Today\'s Movies'}
+                    {upcomingMovies.length > 0 ? 'Todas las demás funciones de hoy' : 'Funciones de hoy'}
                   </h2>
                   <p className="text-muted-foreground">
-                    Complete lineup at Cineteca Nacional
+                    Cartelera completa en Cineteca Nacional
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -210,9 +209,9 @@ const Index = () => {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
                   <Film className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">No movies found</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-2">No se encontraron funciones</h2>
                 <p className="text-muted-foreground">
-                  Check back later or try refreshing the page
+                  Vuelve más tarde o intenta actualizar la página
                 </p>
               </div>
             )}
@@ -224,7 +223,7 @@ const Index = () => {
       <footer className="border-t border-border bg-card/30 mt-16">
         <div className="container mx-auto px-4 py-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Data from{" "}
+            Datos de{" "}
             <a
               href="https://www.cinetecanacional.net"
               target="_blank"
@@ -233,7 +232,7 @@ const Index = () => {
             >
               Cineteca Nacional
             </a>
-            {" • "}Updates every 5 minutes
+            {" • "}Se actualiza cada 5 minutos
           </p>
         </div>
       </footer>

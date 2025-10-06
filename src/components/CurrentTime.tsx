@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
 import { format } from "date-fns";
+import { es as esLocale } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
 
 export const CurrentTime = () => {
@@ -15,6 +16,9 @@ export const CurrentTime = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const formattedDate = format(currentTime, "EEEE, d 'de' MMMM", { locale: esLocale });
+  const formattedDateCapitalized = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
   return (
     <div className="flex items-center gap-2 text-primary font-medium">
       <Clock className="w-5 h-5" />
@@ -23,7 +27,7 @@ export const CurrentTime = () => {
           {format(currentTime, "HH:mm:ss")}
         </div>
         <div className="text-sm text-muted-foreground">
-          Mexico City • {format(currentTime, "EEEE, MMMM do")}
+          Ciudad de México • {formattedDateCapitalized}
         </div>
       </div>
     </div>
