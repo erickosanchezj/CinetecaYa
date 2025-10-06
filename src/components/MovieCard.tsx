@@ -93,15 +93,42 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
                 <Calendar className="w-4 h-4" />
                 <span>Todas las funciones de hoy:</span>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {movie.showtimes.slice(0, 4).map((time, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs"
-                  >
-                    {time}
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {movie.showtimes.slice(0, 4).map((time, index) => {
+                  const ticketLink = movie.ticketLinks?.[index];
+                  const hasLink = Boolean(ticketLink && ticketLink !== "#");
+
+                  if (hasLink) {
+                    return (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 border-border text-foreground hover:bg-primary hover:text-primary-foreground"
+                        asChild
+                      >
+                        <a
+                          href={ticketLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1"
+                        >
+                          {time}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </Button>
+                    );
+                  }
+
+                  return (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs"
+                    >
+                      {time}
+                    </span>
+                  );
+                })}
                 {movie.showtimes.length > 4 && (
                   <span className="px-2 py-1 bg-muted text-muted-foreground rounded text-xs">
                     +{movie.showtimes.length - 4} más
