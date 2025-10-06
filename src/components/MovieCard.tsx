@@ -11,7 +11,6 @@ interface Movie {
   year: string;
   duration: string;
   ticketLinks: string[];
-  location: string;
 }
 
 interface MovieCardProps {
@@ -53,14 +52,10 @@ export const MovieCard = ({ movie, upcomingShowtimes }: MovieCardProps) => {
             </p>
           </div>
           
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span>
-            {movie.room && movie.location
-              ? `${movie.room} • ${movie.location}`
-              : movie.room || movie.location || "Cineteca Nacional"}
-          </span>
-        </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="w-4 h-4" />
+            <span>{movie.room || "Cineteca Nacional"}</span>
+          </div>
           
           {upcomingShowtimes.length > 0 && (
             <div className="space-y-2">
