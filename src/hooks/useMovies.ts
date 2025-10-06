@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Movie {
@@ -59,32 +60,21 @@ export const useMovies = (options: UseMoviesOptions = {}) => {
 
       setLastFetchTime(new Date());
 
-      const functionUrl = import.meta.env.VITE_MOVIE_FUNCTION_URL || '/api/fetch-movies';
+      // Call our edge function
+      const { data, error: functionError } = await supabase.functions.invoke('fetch-movies', {
+        body: { date: dateStr }
+      });
 
-      let response: Response;
-      try {
-        response = await fetch(functionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ date: dateStr })
-        });
-      } catch (networkError) {
-        console.error('Network error while calling movie function:', networkError);
-        throw new Error('No se pudo contactar al servicio de funciones');
+      if (functionError) {
+        throw new Error(functionError.message);
       }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Movie function responded with an error:', response.status, errorText);
-        throw new Error('Error al obtener las funciones desde el servidor');
+      if (!data) {
+        throw new Error('No se recibió información de funciones');
       }
 
-      const data = await response.json();
-
-      if (!data || data.error) {
-        throw new Error(data?.error || 'No se recibió información de funciones');
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       if (!data.movies) {
