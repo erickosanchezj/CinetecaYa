@@ -29,6 +29,15 @@ const CINEMA_CONFIGS: CinemaConfig[] = [
   { id: '002', name: 'Cineteca CENART' }
 ]
 
+const MOVIE_CONTAINER_SELECTORS = [
+  '.col-12.col-md-6.col-lg-4.float-left',
+  '.col-12.col-sm-6.col-lg-4.float-left',
+  '.col-12.col-md-6.col-xl-3.float-left',
+  '.col-12.col-lg-4.float-left',
+  '.cartelera-card',
+  '.movie-card'
+]
+
 const buildCinemaUrl = (cinemaId: string, date: string) =>
   `https://www.cinetecanacional.net/sedes/cartelera.php?cinemaId=${cinemaId}&dia=${date}`
 
@@ -64,8 +73,24 @@ async function fetchCinemaMovies(cinema: CinemaConfig, date: string) {
 
   const movies: Movie[] = []
 
-  const movieContainers = doc.querySelectorAll('.col-12.col-md-6.col-lg-4.float-left')
-  console.log(`Found ${movieContainers.length} movie containers for ${cinema.name}`)
+  const containerSet = new Set<Element>()
+  for (const selector of MOVIE_CONTAINER_SELECTORS) {
+    const found = doc.querySelectorAll(selector)
+    for (const el of found) {
+      containerSet.add(el)
+    }
+  }
+
+  // Fallback: grab any column that contains a recognizable movie title element
+  const potentialColumns = doc.querySelectorAll('div.col-12')
+  for (const column of potentialColumns) {
+    if (column.querySelector('p.font-weight-bold.text-uppercase.text-decoration-none.text-black')) {
+      containerSet.add(column)
+    }
+  }
+
+  const movieContainers = Array.from(containerSet)
+  console.log(`Found ${movieContainers.length} potential movie containers for ${cinema.name}`)
 
   for (const container of movieContainers) {
     try {
@@ -98,16 +123,48 @@ async function fetchCinemaMovies(cinema: CinemaConfig, date: string) {
       const ticketLinks: string[] = []
       let room = ''
 
-      const timeLinks = container.querySelectorAll('a[href*="Ticketing"]')
-      console.log(`Found ${timeLinks.length} ticket links for "${title}" at ${cinema.name}`)
+      const timeRegex = /^\d{1,2}:\d{2}$/
+      const anchorLinks = Array.from(container.querySelectorAll('a'))
+      const badgeElements = Array.from(container.querySelectorAll('span.badge, span.badge-pill, span.badge-secondary'))
 
-      for (const link of timeLinks) {
-        const time = link.textContent?.trim()
-        const ticketUrl = link.getAttribute('href')
+      const potentialTimeElements = [...anchorLinks, ...badgeElements]
+      console.log(
+        `Found ${potentialTimeElements.length} potential time elements for "${title}" at ${cinema.name}`
+      )
 
-        if (time && ticketUrl && time.match(/^\d{2}:\d{2}$/)) {
-          showtimes.push(time)
-          ticketLinks.push(ticketUrl)
+      for (const element of potentialTimeElements) {
+        const time = element.textContent?.trim()
+
+        if (!time || !timeRegex.test(time)) {
+          continue
+        }
+
+        if (showtimes.includes(time)) {
+          continue
+        }
+
+        let ticketUrl = '#'
+        if ((element as Element).tagName === 'A') {
+          const href = (element as Element).getAttribute('href')
+          if (href) {
+            ticketUrl = href
+          }
+        }
+
+        showtimes.push(time)
+        ticketLinks.push(ticketUrl)
+      }
+
+      if (showtimes.length === 0) {
+        // Some listings expose times as plain text separated by pipes or new lines
+        const textMatches = (container.textContent || '')
+          .split(/\n|\|/)
+          .map((segment) => segment.trim())
+          .filter((segment) => timeRegex.test(segment) && !showtimes.includes(segment))
+
+        for (const match of textMatches) {
+          showtimes.push(match)
+          ticketLinks.push('#')
         }
       }
 
@@ -195,24 +252,33 @@ serve(async (req) => {
       )
     }
     
-    const cinemaResults = await Promise.all(
-      CINEMA_CONFIGS.map(async (cinema) => {
-        try {
-          const result = await fetchCinemaMovies(cinema, date)
-          return { ...result, cinema, error: null as string | null }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-          console.error(`Error fetching movies for ${cinema.name}:`, errorMessage)
-          return {
-            movies: [] as Movie[],
-            containersFound: 0,
-            url: buildCinemaUrl(cinema.id, date),
-            cinema,
-            error: errorMessage
-          }
-        }
-      })
-    )
+    const cinemaResults = [] as Array<{
+      movies: Movie[]
+      containersFound: number
+      url: string
+      cinema: CinemaConfig
+      error: string | null
+    }>
+
+    for (const cinema of CINEMA_CONFIGS) {
+      try {
+        const result = await fetchCinemaMovies(cinema, date)
+        cinemaResults.push({ ...result, cinema, error: null })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+        console.error(`Error fetching movies for ${cinema.name}:`, errorMessage)
+        cinemaResults.push({
+          movies: [] as Movie[],
+          containersFound: 0,
+          url: buildCinemaUrl(cinema.id, date),
+          cinema,
+          error: errorMessage
+        })
+
+        // Be kind to the remote server if it is rate limiting us
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+    }
 
     const movies = cinemaResults.flatMap((result) => result.movies)
 
